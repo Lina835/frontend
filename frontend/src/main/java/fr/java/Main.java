@@ -1,7 +1,7 @@
 package fr.java;
 
-import fr.java.frontend.HomeView;
 import fr.java.frontend.Router;
+import fr.java.frontend.view.HomeView;
 import javafx.application.Application;
 import javafx.stage.Stage;
 

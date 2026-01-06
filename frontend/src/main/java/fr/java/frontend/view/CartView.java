@@ -1,5 +1,7 @@
-package fr.java.frontend;
+package fr.java.frontend.view;
 
+import fr.java.frontend.Router;
+import fr.java.frontend.api.ApiClient;
 import fr.java.frontend.cart.Cart;
 import fr.java.frontend.cart.CartItem;
 import javafx.geometry.Insets;
@@ -56,7 +58,31 @@ public class CartView {
 
         Button confirm = new Button("✅ Confirmer la commande");
         confirm.setDisable(Cart.getItems().isEmpty());
-        confirm.setOnAction(e -> System.out.println("OK (on remettra POST après)"));
+        confirm.setOnAction(e -> {
+    try {
+        // 1. Désactiver le bouton pour éviter les doubles clics
+        confirm.setDisable(true);
+
+        // 2. Appel au backend
+        int newId = ApiClient.createOrder("BORNE_01", Cart.getItems());
+
+        // 3. Succès -> Page de confirmation
+        Router.setScene(ConfirmationView.build(newId));
+
+    } catch (Exception ex) {
+        // En cas d'erreur (serveur éteint par exemple)
+        confirm.setDisable(false); // Réactiver le bouton
+        
+        // Créer une petite popup d'alerte
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+        alert.setTitle("Erreur de connexion");
+        alert.setHeaderText("Impossible d'envoyer la commande");
+        alert.setContentText("Le serveur ne répond pas. Veuillez appeler un membre du personnel.");
+        alert.showAndWait();
+        
+        ex.printStackTrace();
+    }
+});
 
         bottom.getChildren().addAll(clear, confirm);
 

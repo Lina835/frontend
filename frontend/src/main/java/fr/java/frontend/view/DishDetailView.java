@@ -1,5 +1,6 @@
-package fr.java.frontend;
+package fr.java.frontend.view;
 
+import fr.java.frontend.Router;
 import fr.java.frontend.model.Dish;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

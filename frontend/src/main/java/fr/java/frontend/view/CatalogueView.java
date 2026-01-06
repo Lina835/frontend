@@ -1,5 +1,6 @@
-package fr.java.frontend;
+package fr.java.frontend.view;
 
+import fr.java.frontend.Router;
 import fr.java.frontend.api.ApiClient;
 import fr.java.frontend.model.Category;
 import fr.java.frontend.model.Dish;
@@ -11,7 +12,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import fr.java.frontend.DishDetailView;
 
 
 import java.util.List;

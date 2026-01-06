@@ -1,5 +1,6 @@
-package fr.java.frontend;
+package fr.java.frontend.view;
 
+import fr.java.frontend.Router;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
