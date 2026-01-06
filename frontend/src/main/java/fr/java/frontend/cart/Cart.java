@@ -49,6 +49,18 @@ public class Cart {
         return sum;
     }
 
+    public static void add(Dish dish, int quantity) {
+    // On cherche si le produit est déjà dans le panier
+    for (CartItem item : items) {
+        if (item.dish.id == dish.id) {
+            item.quantity += quantity; // On ajoute la nouvelle quantité choisie
+            return;
+        }
+    }
+    // Si c'est un nouveau produit, on l'ajoute avec la quantité spécifiée
+    items.add(new CartItem(dish, quantity));
+}
+
     public static void clear() {
         items.clear();
     }

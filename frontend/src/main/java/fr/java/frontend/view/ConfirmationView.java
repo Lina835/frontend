@@ -8,77 +8,108 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
+import java.util.List;
 
 public class ConfirmationView {
 
-    public static Scene build(int orderId) {
-        // --- ENTÊTE ---
-        Label title = new Label("Confirmation de commande");
-        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold;");
+    public static Scene build(int orderId, double totalAmount, List<CartItem> items) {
+        // Fond gris clair (comme les écrans McDo/BK)
+        VBox root = new VBox(25);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(40));
+        root.setStyle("-fx-background-color: #f0f0f0;");
 
-        Label icon = new Label("✅");
-        icon.setStyle("-fx-font-size: 50px;");
+        // --- LE TICKET BLANC ---
+        VBox ticket = new VBox(15);
+        ticket.setMaxWidth(400);
+        ticket.setAlignment(Pos.TOP_CENTER);
+        ticket.setPadding(new Insets(30));
+        ticket.setStyle(
+            "-fx-background-color: white; " + 
+            "-fx-background-radius: 10; " + 
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);"
+        );
 
-        Label orderLabel = new Label("Commande N° #" + orderId);
-        orderLabel.setStyle("-fx-font-size: 36px; -fx-font-weight: bold;");
+        // En-tête simple
+        Label restaurantName = new Label("ASIATIK EXPRESS");
+        restaurantName.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
-        // --- ZONE RÉCAPITULATIF (Le cadre noir du dessin) ---
-        VBox recapBox = new VBox(10);
-        recapBox.setStyle("-fx-border-color: black; -fx-border-width: 1; -fx-padding: 20;");
-        recapBox.setMaxWidth(500);
+        Label thankYou = new Label("Merci pour votre commande !");
+        thankYou.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
 
-        Label recapTitle = new Label("Récapitulatif");
-        recapTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-        recapBox.getChildren().add(recapTitle);
+        // LE NUMÉRO (L'élément le plus important)
+        VBox idBox = new VBox(5);
+        idBox.setAlignment(Pos.CENTER);
+        idBox.setPadding(new Insets(10, 0, 10, 0));
+        
+        Label idTitle = new Label("VOTRE NUMÉRO :");
+        idTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        
+        Label idValue = new Label(String.valueOf(orderId));
+        idValue.setStyle("-fx-font-size: 60px; -fx-font-weight: 900; -fx-text-fill: #e74c3c;"); // Rouge BK/McDo
+        
+        idBox.getChildren().addAll(idTitle, idValue);
 
-        // On boucle sur les items du panier comme dans ta CartView
-        for (CartItem it : Cart.getItems()) {
-            HBox line = new HBox();
-            Label nameQty = new Label(it.quantity + "x " + it.dish.name);
+        // Séparateur pointillé
+        Line line = new Line(0, 0, 320, 0);
+        line.setStroke(Color.LIGHTGRAY);
+        line.getStrokeDashArray().addAll(5d, 5d);
+
+        // LISTE DES PRODUITS (Simple et propre)
+        VBox itemsList = new VBox(8);
+        for (CartItem it : items) {
+            HBox row = new HBox();
+            Label qtyName = new Label(it.quantity + " x " + it.dish.name);
+            qtyName.setStyle("-fx-font-size: 15px;");
+            
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+            
             Label price = new Label(String.format("%.2f €", it.totalPrice()));
+            price.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
             
-            // Astuce pour pousser le prix à droite
-            HBox.setHgrow(nameQty, Priority.ALWAYS);
-            nameQty.setMaxWidth(Double.MAX_VALUE);
-            
-            line.getChildren().addAll(nameQty, price);
-            recapBox.getChildren().add(line);
+            row.getChildren().addAll(qtyName, spacer, price);
+            itemsList.getChildren().add(row);
         }
 
-        recapBox.getChildren().add(new Separator());
+        Line line2 = new Line(0, 0, 320, 0);
+        line2.setStroke(Color.BLACK);
 
-        // Ligne du Total
-        HBox totalLine = new HBox();
-        Label totalLabel = new Label("Total");
-        totalLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        Label totalAmount = new Label(String.format("%.2f €", Cart.total()));
-        totalAmount.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        // TOTAL
+        HBox totalRow = new HBox();
+        Label totalLabel = new Label("TOTAL");
+        totalLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
         
-        HBox.setHgrow(totalLabel, Priority.ALWAYS);
-        totalLabel.setMaxWidth(Double.MAX_VALUE);
-        totalLine.getChildren().addAll(totalLabel, totalAmount);
-        recapBox.getChildren().add(totalLine);
+        Region spacer2 = new Region();
+        HBox.setHgrow(spacer2, Priority.ALWAYS);
+        
+        Label totalValue = new Label(String.format("%.2f €", totalAmount));
+        totalValue.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        
+        totalRow.getChildren().addAll(totalLabel, spacer2, totalValue);
 
-        // --- BAS DE PAGE ---
-        Label footer = new Label("Veuillez patienter, votre commande est en préparation");
-        footer.setStyle("-fx-text-fill: #666666; -fx-italic: true;");
+        ticket.getChildren().addAll(restaurantName, thankYou, idBox, line, itemsList, line2, totalRow);
 
-        Button btnNew = new Button("Nouvelle commande");
-        btnNew.setStyle("-fx-padding: 10 30; -fx-font-size: 16px; -fx-background-radius: 20;");
-        btnNew.setOnAction(e -> {
-            Cart.clear(); // On vide le panier pour le client suivant
-            Router.setScene(HomeView.build());
+        // --- BOUTON DE SORTIE ---
+        Button btnFinish = new Button("TERMINER");
+        btnFinish.setPrefWidth(400);
+        btnFinish.setStyle(
+            "-fx-background-color: #2d3436; " + 
+            "-fx-text-fill: white; " + 
+            "-fx-font-size: 18px; " + 
+            "-fx-font-weight: bold; " + 
+            "-fx-padding: 15; " + 
+            "-fx-background-radius: 10;"
+        );
+        btnFinish.setOnAction(e -> {
+            Cart.clear();
+            Router.setScene(CatalogueView.build());
         });
 
-        // Mise en page globale
-        VBox root = new VBox(20, title, icon, orderLabel, recapBox, footer, btnNew);
-        root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(30));
-        root.setStyle("-fx-background-color: white;");
+        root.getChildren().addAll(ticket, btnFinish);
 
         return new Scene(root, 900, 700);
     }

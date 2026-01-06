@@ -2,123 +2,146 @@ package fr.java.frontend.view;
 
 import fr.java.frontend.Router;
 import fr.java.frontend.api.ApiClient;
+import fr.java.frontend.cart.Cart;
 import fr.java.frontend.model.Category;
 import fr.java.frontend.model.Dish;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.TilePane;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
-
-
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import java.util.List;
 
 public class CatalogueView {
 
     public static Scene build() {
-
         BorderPane root = new BorderPane();
-        root.setPadding(new Insets(15));
-        root.setStyle("-fx-background-color: white;");
+        root.setStyle("-fx-background-color: #f8f9fa;"); // Fond gris perle
 
-        Button cartBtn = new Button("🛒 Voir le panier");
-        cartBtn.setOnAction(e -> Router.setScene(CartView.build()));
+        // --- TOP BAR (Menu + Total Panier) ---
+        HBox topBar = new HBox();
+        topBar.setPadding(new Insets(20, 30, 20, 30));
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        
+        Label menuTitle = new Label("☰  MENU");
+        menuTitle.setStyle("-fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #2d3436;");
+        
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        // Petit badge prix en haut à droite (comme ton schéma)
+        Label cartPriceBadge = new Label(String.format("🛒 %.2f €", Cart.total()));
+        cartPriceBadge.setStyle(
+            "-fx-background-color: white; -fx-border-color: #2d3436; -fx-border-radius: 5; " +
+            "-fx-padding: 8 15; -fx-font-weight: bold; -fx-font-size: 18px;"
+        );
+        
+        topBar.getChildren().addAll(menuTitle, spacer, cartPriceBadge);
+        root.setTop(topBar);
 
-cartBtn.setStyle("-fx-font-size: 16px; -fx-padding: 10 20;");
-        root.setBottom(cartBtn);
-BorderPane.setAlignment(cartBtn, Pos.CENTER);
-BorderPane.setMargin(cartBtn, new Insets(10));
-
-        // ✅ Bouton retour
-        Button back = new Button("← Retour Accueil");
-        back.setOnAction(e -> Router.setScene(HomeView.build()));
-        root.setTop(back);
-        BorderPane.setMargin(back, new Insets(0, 0, 10, 0));
-
-        // ✅ Onglets catégories
+        // --- CENTRE (Onglets + Grille) ---
         TabPane tabPane = new TabPane();
-        root.setCenter(tabPane);
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        // Style CSS pour les onglets
+        tabPane.setStyle("-fx-tab-min-width: 120px; -fx-tab-min-height: 40px;");
 
         try {
             List<Category> categories = ApiClient.getCategories();
-
             for (Category c : categories) {
-                Tab tab = new Tab(c.name);
-                tab.setClosable(false);
-
-                // Grille de plats
+                Tab tab = new Tab(c.name.toUpperCase());
+                
+                // Grille de produits (TilePane)
                 TilePane grid = new TilePane();
-                grid.setHgap(15);
-                grid.setVgap(15);
-                grid.setPadding(new Insets(10));
+                grid.setHgap(25);
+                grid.setVgap(25);
+                grid.setPadding(new Insets(30));
+                grid.setAlignment(Pos.TOP_LEFT);
                 grid.setPrefColumns(3);
 
                 List<Dish> dishes = ApiClient.getDishes(c.id);
-
                 for (Dish d : dishes) {
                     grid.getChildren().add(dishCard(d));
                 }
 
                 ScrollPane scroll = new ScrollPane(grid);
                 scroll.setFitToWidth(true);
+                scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
                 tab.setContent(scroll);
-
+                
                 tabPane.getTabs().add(tab);
             }
-
         } catch (Exception ex) {
-            // Si backend OFF ou erreur : on affiche un message clair
-            VBox errBox = new VBox(10);
-            errBox.setAlignment(Pos.CENTER);
-            errBox.getChildren().addAll(
-                    new Text("❌ Impossible de charger le catalogue."),
-                    new Text("Vérifie que le backend est lancé sur http://localhost:7000"),
-                    new Text("Erreur : " + ex.getMessage())
-            );
-            root.setCenter(errBox);
+            root.setCenter(new Label("Erreur de chargement : " + ex.getMessage()));
         }
+        root.setCenter(tabPane);
 
-        return new Scene(root, 1000, 650);
+        // --- BOTTOM BAR (Navigation) ---
+        HBox bottomBar = new HBox();
+        bottomBar.setPadding(new Insets(20, 30, 20, 30));
+        bottomBar.setAlignment(Pos.CENTER);
+        bottomBar.setSpacing(400); // Espace entre Accueil et Panier
+
+        Button btnHome = new Button("ACCUEIL");
+        btnHome.setStyle("-fx-background-color: white; -fx-border-color: #2d3436; -fx-padding: 12 30; -fx-font-weight: bold; -fx-background-radius: 5; -fx-border-radius: 5;");
+        btnHome.setOnAction(e -> Router.setScene(HomeView.build()));
+
+        Button btnCart = new Button("PANIER");
+        btnCart.setStyle("-fx-background-color: #2d3436; -fx-text-fill: white; -fx-padding: 12 40; -fx-font-weight: bold; -fx-background-radius: 5;");
+        btnCart.setOnAction(e -> Router.setScene(CartView.build()));
+
+        bottomBar.getChildren().addAll(btnHome, btnCart);
+        root.setBottom(bottomBar);
+
+        return new Scene(root, 1280, 800);
     }
 
-    // ✅ Une "carte" plat (simple)
+    // --- CARTE PRODUIT STYLE "PRO" ---
     private static VBox dishCard(Dish d) {
-        VBox box = new VBox(8);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(10));
-        box.setPrefWidth(260);
-        box.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-border-color: #dddddd;" +
-                "-fx-border-radius: 10;" +
-                "-fx-background-radius: 10;"
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(15));
+        card.setPrefWidth(300);
+        card.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-background-radius: 15; " +
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);"
         );
 
+        // Placeholder Image (Gris comme sur ton schéma)
+        StackPane imgPlaceholder = new StackPane();
+        Rectangle rect = new Rectangle(270, 180, Color.web("#ecf0f1"));
+        rect.setArcWidth(15);
+        rect.setArcHeight(15);
+        Label imgTxt = new Label("PHOTO PLAT");
+        imgTxt.setStyle("-fx-text-fill: #bdc3c7;");
+        imgPlaceholder.getChildren().addAll(rect, imgTxt);
+
+        // Infos
         Label name = new Label(d.name);
-        name.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-
+        name.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d3436;");
+        
         Label price = new Label(String.format("%.2f €", d.price));
+        price.setStyle("-fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #e74c3c;");
 
-        Button details = new Button("Détails");
-        details.setDisable(!d.available);
-
-        // ✅ Quand on clique -> écran détail (on fera juste après)
-      details.setOnAction(e -> {
-    Router.setScene(DishDetailView.build(d));
-});
-
+        // Bouton AJOUTER
+        Button btnAdd = new Button("AJOUTER");
+        btnAdd.setMaxWidth(Double.MAX_VALUE);
+        btnAdd.setStyle(
+            "-fx-background-color: white; -fx-border-color: #2d3436; " +
+            "-fx-font-weight: bold; -fx-padding: 8; -fx-cursor: hand;"
+        );
+        
+        // Clic sur AJOUTER -> Va vers le détail du plat
+        btnAdd.setOnAction(e -> Router.setScene(DishDetailView.build(d)));
 
         if (!d.available) {
-            Label soldOut = new Label("Indisponible");
-            soldOut.setStyle("-fx-text-fill: red;");
-            box.getChildren().addAll(name, price, soldOut, details);
-        } else {
-            box.getChildren().addAll(name, price, details);
+            btnAdd.setText("INDISPONIBLE");
+            btnAdd.setDisable(true);
+            card.setOpacity(0.6);
         }
 
-        return box;
+        card.getChildren().addAll(imgPlaceholder, name, price, btnAdd);
+        return card;
     }
 }
