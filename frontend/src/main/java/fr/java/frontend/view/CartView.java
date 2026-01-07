@@ -1,20 +1,15 @@
 package fr.java.frontend.view;
 
 import fr.java.frontend.Router;
-import fr.java.frontend.api.ApiClient;
 import fr.java.frontend.cart.Cart;
 import fr.java.frontend.cart.CartItem;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class CartView {
 
@@ -103,20 +98,9 @@ public class CartView {
         confirm.setDisable(Cart.getItems().isEmpty());
 
         confirm.setOnAction(e -> {
-            try {
-                confirm.setDisable(true);
-                double finalAmount = Cart.total();
-                List<CartItem> itemsOrdered = new ArrayList<>(Cart.getItems());
-                int newId = ApiClient.createOrder("BORNE_01", itemsOrdered);
-                Router.setScene(ConfirmationView.build(newId, finalAmount, itemsOrdered));
-            } catch (Exception ex) {
-                confirm.setDisable(false);
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Erreur");
-                alert.setContentText("Le serveur ne répond pas.");
-                alert.showAndWait();
-            }
-        });
+    // On bascule vers l'écran de récapitulatif pour saisir le nom/table
+    Router.setScene(RecapulatifView.build());
+});
 
         actions.getChildren().addAll(clear, confirm);
         bottom.getChildren().addAll(totalRow, actions);
