@@ -8,140 +8,163 @@ import fr.java.frontend.model.Dish;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+
+import java.io.InputStream;
 import java.util.List;
 
 public class CatalogueView {
 
+    private static Category selectedCategory = null;
+
     public static Scene build() {
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #f8f9fa;"); // Fond gris perle
+        root.setStyle("-fx-background-color: #f8f9fa;");
+        root.setPadding(new Insets(20));
 
-        // --- TOP BAR (Menu + Total Panier) ---
-        HBox topBar = new HBox();
-        topBar.setPadding(new Insets(20, 30, 20, 30));
-        topBar.setAlignment(Pos.CENTER_LEFT);
-        
-        Label menuTitle = new Label("☰  MENU");
-        menuTitle.setStyle("-fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #2d3436;");
-        
+        // HEADER
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label title = new Label("CATALOGUE");
+        title.setStyle("-fx-font-size: 28px; -fx-font-weight: 900;");
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
-        // Petit badge prix en haut à droite (comme ton schéma)
-        Label cartPriceBadge = new Label(String.format("🛒 %.2f €", Cart.total()));
-        cartPriceBadge.setStyle(
-            "-fx-background-color: white; -fx-border-color: #2d3436; -fx-border-radius: 5; " +
-            "-fx-padding: 8 15; -fx-font-weight: bold; -fx-font-size: 18px;"
-        );
-        
-        topBar.getChildren().addAll(menuTitle, spacer, cartPriceBadge);
-        root.setTop(topBar);
 
-        // --- CENTRE (Onglets + Grille) ---
-        TabPane tabPane = new TabPane();
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        // Style CSS pour les onglets
-        tabPane.setStyle("-fx-tab-min-width: 120px; -fx-tab-min-height: 40px;");
+        Button cartBtn = new Button(String.format("Panier • €%.2f", Cart.total()));
+        cartBtn.setStyle("-fx-background-color: black; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+        cartBtn.setOnAction(e -> Router.setScene(CartView.build()));
 
-        try {
-            List<Category> categories = ApiClient.getCategories();
+        header.getChildren().addAll(title, spacer, cartBtn);
+        root.setTop(header);
+
+        // LEFT: categories
+        VBox categoriesBox = new VBox(10);
+        categoriesBox.setPadding(new Insets(20, 20, 20, 0));
+        categoriesBox.setPrefWidth(240);
+
+        List<Category> categories = ApiClient.getCategories();
+        if (selectedCategory == null && categories != null && !categories.isEmpty()) {
+            selectedCategory = categories.get(0);
+        }
+
+        if (categories != null) {
             for (Category c : categories) {
-                Tab tab = new Tab(c.name.toUpperCase());
-                
-                // Grille de produits (TilePane)
-                TilePane grid = new TilePane();
-                grid.setHgap(25);
-                grid.setVgap(25);
-                grid.setPadding(new Insets(30));
-                grid.setAlignment(Pos.TOP_LEFT);
-                grid.setPrefColumns(3);
+                Button b = new Button(c.name);
+                b.setMaxWidth(Double.MAX_VALUE);
 
-                List<Dish> dishes = ApiClient.getDishes(c.id);
+                boolean selected = (selectedCategory != null && c.id == selectedCategory.id);
+                b.setStyle(selected
+                        ? "-fx-background-color: black; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
+                        : "-fx-background-color: white; -fx-border-color: #ddd; -fx-font-weight: bold; -fx-cursor: hand;");
+
+                b.setOnAction(e -> {
+                    selectedCategory = c;
+                    Router.setScene(CatalogueView.build());
+                });
+
+                categoriesBox.getChildren().add(b);
+            }
+        }
+
+        root.setLeft(categoriesBox);
+
+        // CENTER: dishes grid
+        FlowPane grid = new FlowPane();
+        grid.setHgap(20);
+        grid.setVgap(20);
+        grid.setPadding(new Insets(20));
+        grid.setPrefWrapLength(900);
+
+        if (selectedCategory != null) {
+            List<Dish> dishes = ApiClient.getDishes(selectedCategory.id);
+            if (dishes != null) {
                 for (Dish d : dishes) {
                     grid.getChildren().add(dishCard(d));
                 }
-
-                ScrollPane scroll = new ScrollPane(grid);
-                scroll.setFitToWidth(true);
-                scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-                tab.setContent(scroll);
-                
-                tabPane.getTabs().add(tab);
             }
-        } catch (Exception ex) {
-            root.setCenter(new Label("Erreur de chargement : " + ex.getMessage()));
         }
-        root.setCenter(tabPane);
 
-        // --- BOTTOM BAR (Navigation) ---
-        HBox bottomBar = new HBox();
-        bottomBar.setPadding(new Insets(20, 30, 20, 30));
-        bottomBar.setAlignment(Pos.CENTER);
-        bottomBar.setSpacing(400); // Espace entre Accueil et Panier
+        ScrollPane scroll = new ScrollPane(grid);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        root.setCenter(scroll);
 
-        Button btnHome = new Button("ACCUEIL");
-        btnHome.setStyle("-fx-background-color: white; -fx-border-color: #2d3436; -fx-padding: 12 30; -fx-font-weight: bold; -fx-background-radius: 5; -fx-border-radius: 5;");
-        btnHome.setOnAction(e -> Router.setScene(HomeView.build()));
-
-        Button btnCart = new Button("PANIER");
-        btnCart.setStyle("-fx-background-color: #2d3436; -fx-text-fill: white; -fx-padding: 12 40; -fx-font-weight: bold; -fx-background-radius: 5;");
-        btnCart.setOnAction(e -> Router.setScene(CartView.build()));
-
-        bottomBar.getChildren().addAll(btnHome, btnCart);
-        root.setBottom(bottomBar);
-
-        return new Scene(root, 1280, 800);
+        return new Scene(root, 1280, 720);
     }
 
-    // --- CARTE PRODUIT STYLE "PRO" ---
-    private static VBox dishCard(Dish d) {
+    private static VBox dishCard(Dish dish) {
         VBox card = new VBox(10);
-        card.setPadding(new Insets(15));
-        card.setPrefWidth(300);
-        card.setStyle(
-            "-fx-background-color: white; " +
-            "-fx-background-radius: 15; " +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);"
-        );
+        card.setPadding(new Insets(12));
+        card.setPrefWidth(240);
 
-        // Placeholder Image (Gris comme sur ton schéma)
-        StackPane imgPlaceholder = new StackPane();
-        Rectangle rect = new Rectangle(270, 180, Color.web("#ecf0f1"));
-        rect.setArcWidth(15);
-        rect.setArcHeight(15);
-        Label imgTxt = new Label("PHOTO PLAT");
-        imgTxt.setStyle("-fx-text-fill: #bdc3c7;");
-        imgPlaceholder.getChildren().addAll(rect, imgTxt);
+        // ✅ Mochi indisponible (même si le backend dit available=true)
+        boolean disabled = isMochi(dish) || (dish != null && !dish.available);
 
-        // Infos
-        Label name = new Label(d.name);
-        name.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2d3436;");
-        
-        Label price = new Label(String.format("%.2f €", d.price));
-        price.setStyle("-fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #e74c3c;");
+        card.setStyle(disabled
+                ? "-fx-background-color: #f0f0f0; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #ddd;"
+                : "-fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #eee; -fx-cursor: hand;");
 
-        // Bouton AJOUTER
-        Button btnAdd = new Button("AJOUTER");
-        btnAdd.setMaxWidth(Double.MAX_VALUE);
-        btnAdd.setStyle(
-            "-fx-background-color: white; -fx-border-color: #2d3436; " +
-            "-fx-font-weight: bold; -fx-padding: 8; -fx-cursor: hand;"
-        );
-        
-        // Clic sur AJOUTER -> Va vers le détail du plat
-        btnAdd.setOnAction(e -> Router.setScene(DishDetailView.build(d)));
+        // image
+        ImageView img = loadDishImage(dish != null ? dish.icon : null, 220, 140);
+        if (disabled) img.setOpacity(0.45);
 
-        if (!d.available) {
-            btnAdd.setText("INDISPONIBLE");
-            btnAdd.setDisable(true);
-            card.setOpacity(0.6);
+        String safeName = (dish != null && dish.name != null) ? dish.name.trim() : "";
+        Label name = new Label(safeName);
+        name.setStyle("-fx-font-weight: bold; -fx-font-size: 15px;");
+
+        Label price = new Label(String.format("%.2f €", dish != null ? dish.price : 0.0));
+        price.setStyle("-fx-font-weight: 900; -fx-font-size: 14px;");
+
+        card.getChildren().addAll(img, name, price);
+
+        if (disabled) {
+            Label badge = new Label("INDISPONIBLE");
+            badge.setStyle("-fx-text-fill: #d63031; -fx-font-weight: bold;");
+            card.getChildren().add(badge);
+        } else {
+            card.setOnMouseClicked(e -> {
+                boolean showOptions = shouldShowOptionsForSelectedCategory();
+                Router.setScene(DishDetailView.build(dish, showOptions));
+            });
         }
 
-        card.getChildren().addAll(imgPlaceholder, name, price, btnAdd);
         return card;
+    }
+
+    // ✅ règle fiable : dépend de la catégorie sélectionnée
+    private static boolean shouldShowOptionsForSelectedCategory() {
+        if (selectedCategory == null || selectedCategory.name == null) return true;
+        String c = selectedCategory.name.toLowerCase();
+        return !(c.contains("dessert") || c.contains("boisson") || c.contains("drink") || c.contains("beverage"));
+    }
+
+    // ✅ Mochi = indisponible
+    private static boolean isMochi(Dish dish) {
+        if (dish == null || dish.name == null) return false;
+        return dish.name.toLowerCase().contains("mochi");
+    }
+
+    private static ImageView loadDishImage(String iconFileName, double w, double h) {
+        ImageView iv = new ImageView();
+        iv.setFitWidth(w);
+        iv.setFitHeight(h);
+        iv.setPreserveRatio(false);
+        iv.setSmooth(true);
+
+        if (iconFileName == null || iconFileName.isBlank()) return iv;
+
+        String path = "/images/" + iconFileName;
+        try (InputStream is = CatalogueView.class.getResourceAsStream(path)) {
+            if (is != null) iv.setImage(new Image(is));
+        } catch (Exception ignored) {}
+
+        return iv;
     }
 }
