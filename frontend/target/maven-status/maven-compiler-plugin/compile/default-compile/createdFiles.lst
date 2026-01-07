@@ -1,5 +1,6 @@
 fr\java\frontend\api\dto\CreateOrderResponse.class
 fr\java\frontend\model\Dish.class
+fr\java\frontend\view\CatalogueView$1.class
 fr\java\frontend\model\Category.class
 fr\java\frontend\cart\CartItem.class
 fr\java\frontend\view\HomeView.class

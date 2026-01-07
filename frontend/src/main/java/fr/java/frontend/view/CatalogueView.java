@@ -5,9 +5,11 @@ import fr.java.frontend.api.ApiClient;
 import fr.java.frontend.cart.Cart;
 import fr.java.frontend.model.Category;
 import fr.java.frontend.model.Dish;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -18,11 +20,8 @@ import javafx.scene.layout.*;
 import java.io.InputStream;
 import java.util.List;
 
-/**
- * Vue principale affichant le catalogue de produits par catégories.
- */
 public class CatalogueView {
-    // Mémorise la catégorie sélectionnée pour l'affichage
+
     private static Category selectedCategory = null;
 
     public static Scene build() {
@@ -30,7 +29,7 @@ public class CatalogueView {
         root.setStyle("-fx-background-color: #f8f9fa;");
         root.setPadding(new Insets(20));
 
-        // HEADER : Titre et accès rapide au panier
+        // HEADER
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
 
@@ -47,63 +46,91 @@ public class CatalogueView {
         header.getChildren().addAll(title, spacer, cartBtn);
         root.setTop(header);
 
-        // LEFT : Barre latérale de navigation des catégories
-        VBox categoriesBox = new VBox(10);
-        categoriesBox.setPadding(new Insets(20, 20, 20, 0));
-        categoriesBox.setPrefWidth(240);
+        // PLACEHOLDER pendant chargement
+        Label loading = new Label("Chargement du catalogue...");
+        loading.setStyle("-fx-font-size: 18px; -fx-text-fill: #636e72; -fx-font-weight: bold;");
+        root.setCenter(new StackPane(loading));
 
-        List<Category> categories = ApiClient.getCategories();
-        if (selectedCategory == null && categories != null && !categories.isEmpty()) {
-            selectedCategory = categories.get(0);
-        }
+        Task<Void> task = new Task<>() {
+            List<Category> categories;
+            List<Dish> dishes;
 
-        if (categories != null) {
-            for (Category c : categories) {
-                Button b = new Button(c.name);
-                b.setMaxWidth(Double.MAX_VALUE);
+            @Override
+            protected Void call() {
+                categories = ApiClient.getCategories();
 
-                boolean selected = (selectedCategory != null && c.id == selectedCategory.id);
-                b.setStyle(selected
-                        ? "-fx-background-color: black; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
-                        : "-fx-background-color: white; -fx-border-color: #ddd; -fx-font-weight: bold; -fx-cursor: hand;");
-
-                b.setOnAction(e -> {
-                    selectedCategory = c;
-                    Router.setScene(CatalogueView.build());
-                });
-
-                categoriesBox.getChildren().add(b);
-            }
-        }
-
-        root.setLeft(categoriesBox);
-
-        // CENTER : Grille dynamique des plats
-        FlowPane grid = new FlowPane();
-        grid.setHgap(20);
-        grid.setVgap(20);
-        grid.setPadding(new Insets(20));
-        grid.setPrefWrapLength(900);
-
-        if (selectedCategory != null) {
-            List<Dish> dishes = ApiClient.getDishes(selectedCategory.id);
-            if (dishes != null) {
-                for (Dish d : dishes) {
-                    grid.getChildren().add(dishCard(d));
+                if (selectedCategory == null && categories != null && !categories.isEmpty()) {
+                    selectedCategory = categories.get(0);
                 }
+                if (selectedCategory != null) {
+                    dishes = ApiClient.getDishes(selectedCategory.id);
+                }
+                return null;
             }
-        }
 
-        ScrollPane scroll = new ScrollPane(grid);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-        root.setCenter(scroll);
+            @Override
+            protected void succeeded() {
+                // LEFT categories
+                VBox categoriesBox = new VBox(10);
+                categoriesBox.setPadding(new Insets(20, 20, 20, 0));
+                categoriesBox.setPrefWidth(240);
 
+                if (categories != null) {
+                    for (Category c : categories) {
+                        Button b = new Button(c.name);
+                        b.setMaxWidth(Double.MAX_VALUE);
+
+                        boolean selected = (selectedCategory != null && c.id == selectedCategory.id);
+                        b.setStyle(selected
+                                ? "-fx-background-color: black; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
+                                : "-fx-background-color: white; -fx-border-color: #ddd; -fx-font-weight: bold; -fx-cursor: hand;");
+
+                        b.setOnAction(e -> {
+                            selectedCategory = c;
+                            Router.setScene(CatalogueView.build());
+                        });
+
+                        categoriesBox.getChildren().add(b);
+                    }
+                }
+
+                root.setLeft(categoriesBox);
+
+                // CENTER dishes grid
+                FlowPane grid = new FlowPane();
+                grid.setHgap(20);
+                grid.setVgap(20);
+                grid.setPadding(new Insets(20));
+                grid.setPrefWrapLength(900);
+
+                if (dishes != null) {
+                    for (Dish d : dishes) {
+                        grid.getChildren().add(dishCard(d));
+                    }
+                }
+
+                ScrollPane scroll = new ScrollPane(grid);
+                scroll.setFitToWidth(true);
+                scroll.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+                root.setCenter(scroll);
+            }
+
+            @Override
+            protected void failed() {
+                Throwable ex = getException();
+                Alert a = new Alert(Alert.AlertType.ERROR);
+                a.setHeaderText("Impossible de charger le catalogue");
+                a.setContentText(ex != null ? ex.getMessage() : "Erreur inconnue");
+                a.show();
+
+                root.setCenter(new StackPane(new Label("Erreur de chargement.")));
+            }
+        };
+
+        new Thread(task).start();
         return new Scene(root, 1280, 720);
     }
-    /**
-     * Crée une carte visuelle pour un plat avec image, nom et prix.
-     */
+
     private static VBox dishCard(Dish dish) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(12));
@@ -115,7 +142,6 @@ public class CatalogueView {
                 ? "-fx-background-color: #f0f0f0; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #ddd;"
                 : "-fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #eee; -fx-cursor: hand;");
 
-        // image
         ImageView img = loadDishImage(dish != null ? dish.icon : null, 220, 140);
         if (disabled) img.setOpacity(0.45);
 
@@ -142,13 +168,11 @@ public class CatalogueView {
         return card;
     }
 
-    // N'affiche pas les options (épices/accompagnements) pour les boissons et desserts.
     private static boolean shouldShowOptionsForSelectedCategory() {
         if (selectedCategory == null || selectedCategory.name == null) return true;
         String c = selectedCategory.name.toLowerCase();
         return !(c.contains("dessert") || c.contains("boisson") || c.contains("drink") || c.contains("beverage"));
     }
-
 
     private static ImageView loadDishImage(String iconFileName, double w, double h) {
         ImageView iv = new ImageView();
