@@ -72,3 +72,4 @@ public class HomeView {
         return new Scene(root, 1280, 720);
     }
 }
+
