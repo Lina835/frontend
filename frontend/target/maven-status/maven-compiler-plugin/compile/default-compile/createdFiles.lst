@@ -3,6 +3,7 @@ fr\java\frontend\model\Dish.class
 fr\java\frontend\model\Category.class
 fr\java\frontend\cart\CartItem.class
 fr\java\frontend\view\HomeView.class
+fr\java\frontend\util\StoreStatus.class
 fr\java\frontend\view\DishDetailView.class
 fr\java\frontend\api\dto\CreateOrderRequest.class
 fr\java\frontend\view\CatalogueView.class
@@ -15,3 +16,4 @@ fr\java\frontend\Router.class
 fr\java\frontend\api\ApiClient$1.class
 fr\java\frontend\api\ApiClient.class
 fr\java\frontend\api\dto\CreateOrderRequest$Item.class
+fr\java\frontend\view\RecapulatifView.class

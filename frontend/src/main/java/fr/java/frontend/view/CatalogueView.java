@@ -18,8 +18,11 @@ import javafx.scene.layout.*;
 import java.io.InputStream;
 import java.util.List;
 
+/**
+ * Vue principale affichant le catalogue de produits par catégories.
+ */
 public class CatalogueView {
-
+    // Mémorise la catégorie sélectionnée pour l'affichage
     private static Category selectedCategory = null;
 
     public static Scene build() {
@@ -27,7 +30,7 @@ public class CatalogueView {
         root.setStyle("-fx-background-color: #f8f9fa;");
         root.setPadding(new Insets(20));
 
-        // HEADER
+        // HEADER : Titre et accès rapide au panier
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
 
@@ -44,7 +47,7 @@ public class CatalogueView {
         header.getChildren().addAll(title, spacer, cartBtn);
         root.setTop(header);
 
-        // LEFT: categories
+        // LEFT : Barre latérale de navigation des catégories
         VBox categoriesBox = new VBox(10);
         categoriesBox.setPadding(new Insets(20, 20, 20, 0));
         categoriesBox.setPrefWidth(240);
@@ -75,7 +78,7 @@ public class CatalogueView {
 
         root.setLeft(categoriesBox);
 
-        // CENTER: dishes grid
+        // CENTER : Grille dynamique des plats
         FlowPane grid = new FlowPane();
         grid.setHgap(20);
         grid.setVgap(20);
@@ -98,14 +101,15 @@ public class CatalogueView {
 
         return new Scene(root, 1280, 720);
     }
-
+    /**
+     * Crée une carte visuelle pour un plat avec image, nom et prix.
+     */
     private static VBox dishCard(Dish dish) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(12));
         card.setPrefWidth(240);
 
-        // ✅ Mochi indisponible (même si le backend dit available=true)
-        boolean disabled = isMochi(dish) || (dish != null && !dish.available);
+        boolean disabled = dish != null && !dish.available;
 
         card.setStyle(disabled
                 ? "-fx-background-color: #f0f0f0; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #ddd;"
@@ -138,18 +142,13 @@ public class CatalogueView {
         return card;
     }
 
-    // ✅ règle fiable : dépend de la catégorie sélectionnée
+    // N'affiche pas les options (épices/accompagnements) pour les boissons et desserts.
     private static boolean shouldShowOptionsForSelectedCategory() {
         if (selectedCategory == null || selectedCategory.name == null) return true;
         String c = selectedCategory.name.toLowerCase();
         return !(c.contains("dessert") || c.contains("boisson") || c.contains("drink") || c.contains("beverage"));
     }
 
-    // ✅ Mochi = indisponible
-    private static boolean isMochi(Dish dish) {
-        if (dish == null || dish.name == null) return false;
-        return dish.name.toLowerCase().contains("mochi");
-    }
 
     private static ImageView loadDishImage(String iconFileName, double w, double h) {
         ImageView iv = new ImageView();

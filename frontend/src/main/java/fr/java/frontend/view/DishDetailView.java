@@ -12,9 +12,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-
 import java.io.InputStream;
 
+/**
+ * Vue détaillée d'un plat permettant la personnalisation (épices, accompagnements)
+ * et le choix de la quantité avant l'ajout au panier.
+ */
 public class DishDetailView {
 
     private static int quantity = 1;

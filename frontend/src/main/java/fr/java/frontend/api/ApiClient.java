@@ -1,7 +1,5 @@
 package fr.java.frontend.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.java.frontend.api.dto.CreateOrderRequest;
 import fr.java.frontend.api.dto.CreateOrderResponse;
 import fr.java.frontend.cart.CartItem;
@@ -14,6 +12,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ApiClient {
 

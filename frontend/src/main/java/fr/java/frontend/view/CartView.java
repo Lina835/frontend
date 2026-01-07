@@ -11,13 +11,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 
+/**
+ * Vue gérant l'affichage du panier d'achat.
+ * Permet de modifier les quantités, de vider le panier ou de passer à la caisse.
+ */
 public class CartView {
 
     public static Scene build() {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #f8f9fa;");
 
-        // HEADER
+        // HEADER : Bouton de retour au catalogue
         HBox header = new HBox();
         header.setPadding(new Insets(25, 30, 10, 30));
 
@@ -28,7 +32,7 @@ public class CartView {
         header.getChildren().add(back);
         root.setTop(header);
 
-        // CENTRE
+        // BODY : Liste des articles ou message "vide"
         VBox mainContainer = new VBox(20);
         mainContainer.setPadding(new Insets(10, 50, 20, 50));
         mainContainer.setAlignment(Pos.TOP_CENTER);
@@ -61,7 +65,7 @@ public class CartView {
 
         root.setCenter(mainContainer);
 
-        // FOOTER
+        // FOOTER : Total et actions (Commander / Vider)
         VBox bottom = new VBox(20);
         bottom.setPadding(new Insets(20, 50, 40, 50));
         bottom.setStyle("-fx-background-color: white; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, -5);");
@@ -98,7 +102,7 @@ public class CartView {
         confirm.setDisable(Cart.getItems().isEmpty());
 
         confirm.setOnAction(e -> {
-    // On bascule vers l'écran de récapitulatif pour saisir le nom/table
+    // Pour bascule vers l'écran de récapitulatif pour saisir le nom/table
     Router.setScene(RecapulatifView.build());
 });
 
@@ -108,14 +112,14 @@ public class CartView {
 
         return new Scene(root, 1280, 720);
     }
-
+    // Construit graphiquement une ligne du panier (Produit, Quantité, Prix).
     private static HBox cartLine(CartItem it) {
         HBox line = new HBox(20);
         line.setAlignment(Pos.CENTER_LEFT);
         line.setPadding(new Insets(15, 25, 15, 25));
         line.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 5, 0, 0, 2);");
 
-        // ✅ Infos produit
+        // Infos produit
         VBox info = new VBox(6);
 
         String safeName = getSafeDishName(it);
@@ -127,7 +131,7 @@ public class CartView {
         Label unitPrice = new Label(String.format("%.2f € / unité", unit));
         unitPrice.setStyle("-fx-text-fill: #636e72; -fx-font-size: 13px;");
 
-        // ✅ options (si présentes seulement)
+        // options (si présentes seulement)
         String optLine = buildOptionsLine(it);
         Label options = new Label(optLine);
         options.setStyle("-fx-text-fill: #636e72; -fx-font-size: 12px;");
@@ -135,11 +139,10 @@ public class CartView {
         options.setVisible(!optLine.isBlank());
         options.setManaged(!optLine.isBlank());
 
-        // ✅ IMPORTANT: on ajoute BIEN le nom (en premier)
         info.getChildren().addAll(name, unitPrice, options);
         info.setPrefWidth(420);
 
-        // ✅ Quantité
+        //  Quantité
         HBox qtyCtrl = new HBox(15);
         qtyCtrl.setAlignment(Pos.CENTER);
 
