@@ -27,7 +27,7 @@ public class DishDetailView {
         return build(dish, true);
     }
 
-    // ✅ showOptions = true pour PLATS, false pour DESSERT/BOISSON
+    // showOptions = true pour PLATS, false pour DESSERT/BOISSON
     public static Scene build(Dish dish, boolean showOptions) {
         quantity = 1;
 
@@ -91,7 +91,7 @@ public class DishDetailView {
         Label priceLabel = new Label(String.format("%.2f €", safePrice));
         priceLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: bold;");
 
-        // ✅ OPTIONS seulement si showOptions=true
+        // OPTIONS seulement si showOptions=true
         ToggleGroup spiceGroup = new ToggleGroup();
         RadioButton rbDoux = new RadioButton("Doux");
         RadioButton rbMoyen = new RadioButton("Moyen");
@@ -163,7 +163,7 @@ public class DishDetailView {
         btnAdd.setOnAction(e -> {
             if (dish == null) return;
 
-            // ✅ SI DESSERT/BOISSON => options null (donc pas d'accompagnement dans le panier)
+            // SI DESSERT/BOISSON => options null (donc pas d'accompagnement dans le panier)
             if (!showOptions) {
                 Cart.add(dish, quantity, null, null);
             } else {

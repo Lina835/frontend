@@ -96,7 +96,7 @@ public class CatalogueView {
 
                 root.setLeft(categoriesBox);
 
-                // CENTER dishes grid
+                // Centre dishes grid
                 FlowPane grid = new FlowPane();
                 grid.setHgap(20);
                 grid.setVgap(20);
