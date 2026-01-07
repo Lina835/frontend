@@ -4,7 +4,7 @@ import java.time.LocalTime;
 
 public class StoreStatus {
     // 1. On définit les horaires (11h00 à 22h30)
-    private static final LocalTime OPEN_TIME = LocalTime.of(15, 0);
+    private static final LocalTime OPEN_TIME = LocalTime.of(18, 0);
     private static final LocalTime CLOSE_TIME = LocalTime.of(22, 30);
     
     // 2. Le code secret pour le gérant
