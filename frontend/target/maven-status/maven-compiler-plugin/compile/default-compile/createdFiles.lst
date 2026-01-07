@@ -1,0 +1,17 @@
+fr\java\frontend\api\dto\CreateOrderResponse.class
+fr\java\frontend\model\Dish.class
+fr\java\frontend\model\Category.class
+fr\java\frontend\cart\CartItem.class
+fr\java\frontend\view\HomeView.class
+fr\java\frontend\view\DishDetailView.class
+fr\java\frontend\api\dto\CreateOrderRequest.class
+fr\java\frontend\view\CatalogueView.class
+fr\java\frontend\api\ApiClient$2.class
+fr\java\frontend\view\CartView.class
+fr\java\Main.class
+fr\java\frontend\view\ConfirmationView.class
+fr\java\frontend\cart\Cart.class
+fr\java\frontend\Router.class
+fr\java\frontend\api\ApiClient$1.class
+fr\java\frontend\api\ApiClient.class
+fr\java\frontend\api\dto\CreateOrderRequest$Item.class

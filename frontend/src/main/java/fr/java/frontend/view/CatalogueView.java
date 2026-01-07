@@ -2,123 +2,169 @@ package fr.java.frontend.view;
 
 import fr.java.frontend.Router;
 import fr.java.frontend.api.ApiClient;
+import fr.java.frontend.cart.Cart;
 import fr.java.frontend.model.Category;
 import fr.java.frontend.model.Dish;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.TilePane;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 
-
+import java.io.InputStream;
 import java.util.List;
 
 public class CatalogueView {
 
+    private static Category selectedCategory = null;
+
     public static Scene build() {
-
         BorderPane root = new BorderPane();
-        root.setPadding(new Insets(15));
-        root.setStyle("-fx-background-color: white;");
+        root.setStyle("-fx-background-color: #f8f9fa;");
+        root.setPadding(new Insets(20));
 
-        Button cartBtn = new Button("🛒 Voir le panier");
+        // HEADER
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label title = new Label("CATALOGUE");
+        title.setStyle("-fx-font-size: 28px; -fx-font-weight: 900;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button cartBtn = new Button(String.format("Panier • €%.2f", Cart.total()));
+        cartBtn.setStyle("-fx-background-color: black; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         cartBtn.setOnAction(e -> Router.setScene(CartView.build()));
 
-cartBtn.setStyle("-fx-font-size: 16px; -fx-padding: 10 20;");
-        root.setBottom(cartBtn);
-BorderPane.setAlignment(cartBtn, Pos.CENTER);
-BorderPane.setMargin(cartBtn, new Insets(10));
+        header.getChildren().addAll(title, spacer, cartBtn);
+        root.setTop(header);
 
-        // ✅ Bouton retour
-        Button back = new Button("← Retour Accueil");
-        back.setOnAction(e -> Router.setScene(HomeView.build()));
-        root.setTop(back);
-        BorderPane.setMargin(back, new Insets(0, 0, 10, 0));
+        // LEFT: categories
+        VBox categoriesBox = new VBox(10);
+        categoriesBox.setPadding(new Insets(20, 20, 20, 0));
+        categoriesBox.setPrefWidth(240);
 
-        // ✅ Onglets catégories
-        TabPane tabPane = new TabPane();
-        root.setCenter(tabPane);
+        List<Category> categories = ApiClient.getCategories();
+        if (selectedCategory == null && categories != null && !categories.isEmpty()) {
+            selectedCategory = categories.get(0);
+        }
 
-        try {
-            List<Category> categories = ApiClient.getCategories();
-
+        if (categories != null) {
             for (Category c : categories) {
-                Tab tab = new Tab(c.name);
-                tab.setClosable(false);
+                Button b = new Button(c.name);
+                b.setMaxWidth(Double.MAX_VALUE);
 
-                // Grille de plats
-                TilePane grid = new TilePane();
-                grid.setHgap(15);
-                grid.setVgap(15);
-                grid.setPadding(new Insets(10));
-                grid.setPrefColumns(3);
+                boolean selected = (selectedCategory != null && c.id == selectedCategory.id);
+                b.setStyle(selected
+                        ? "-fx-background-color: black; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
+                        : "-fx-background-color: white; -fx-border-color: #ddd; -fx-font-weight: bold; -fx-cursor: hand;");
 
-                List<Dish> dishes = ApiClient.getDishes(c.id);
+                b.setOnAction(e -> {
+                    selectedCategory = c;
+                    Router.setScene(CatalogueView.build());
+                });
 
+                categoriesBox.getChildren().add(b);
+            }
+        }
+
+        root.setLeft(categoriesBox);
+
+        // CENTER: dishes grid
+        FlowPane grid = new FlowPane();
+        grid.setHgap(20);
+        grid.setVgap(20);
+        grid.setPadding(new Insets(20));
+        grid.setPrefWrapLength(900);
+
+        if (selectedCategory != null) {
+            List<Dish> dishes = ApiClient.getDishes(selectedCategory.id);
+            if (dishes != null) {
                 for (Dish d : dishes) {
                     grid.getChildren().add(dishCard(d));
                 }
-
-                ScrollPane scroll = new ScrollPane(grid);
-                scroll.setFitToWidth(true);
-                tab.setContent(scroll);
-
-                tabPane.getTabs().add(tab);
             }
-
-        } catch (Exception ex) {
-            // Si backend OFF ou erreur : on affiche un message clair
-            VBox errBox = new VBox(10);
-            errBox.setAlignment(Pos.CENTER);
-            errBox.getChildren().addAll(
-                    new Text("❌ Impossible de charger le catalogue."),
-                    new Text("Vérifie que le backend est lancé sur http://localhost:7000"),
-                    new Text("Erreur : " + ex.getMessage())
-            );
-            root.setCenter(errBox);
         }
 
-        return new Scene(root, 1000, 650);
+        ScrollPane scroll = new ScrollPane(grid);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        root.setCenter(scroll);
+
+        return new Scene(root, 1280, 720);
     }
 
-    // ✅ Une "carte" plat (simple)
-    private static VBox dishCard(Dish d) {
-        VBox box = new VBox(8);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(10));
-        box.setPrefWidth(260);
-        box.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-border-color: #dddddd;" +
-                "-fx-border-radius: 10;" +
-                "-fx-background-radius: 10;"
-        );
+    private static VBox dishCard(Dish dish) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(12));
+        card.setPrefWidth(240);
 
-        Label name = new Label(d.name);
-        name.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        // ✅ Mochi indisponible (même si le backend dit available=true)
+        boolean disabled = isMochi(dish) || (dish != null && !dish.available);
 
-        Label price = new Label(String.format("%.2f €", d.price));
+        card.setStyle(disabled
+                ? "-fx-background-color: #f0f0f0; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #ddd;"
+                : "-fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #eee; -fx-cursor: hand;");
 
-        Button details = new Button("Détails");
-        details.setDisable(!d.available);
+        // image
+        ImageView img = loadDishImage(dish != null ? dish.icon : null, 220, 140);
+        if (disabled) img.setOpacity(0.45);
 
-        // ✅ Quand on clique -> écran détail (on fera juste après)
-      details.setOnAction(e -> {
-    Router.setScene(DishDetailView.build(d));
-});
+        String safeName = (dish != null && dish.name != null) ? dish.name.trim() : "";
+        Label name = new Label(safeName);
+        name.setStyle("-fx-font-weight: bold; -fx-font-size: 15px;");
 
+        Label price = new Label(String.format("%.2f €", dish != null ? dish.price : 0.0));
+        price.setStyle("-fx-font-weight: 900; -fx-font-size: 14px;");
 
-        if (!d.available) {
-            Label soldOut = new Label("Indisponible");
-            soldOut.setStyle("-fx-text-fill: red;");
-            box.getChildren().addAll(name, price, soldOut, details);
+        card.getChildren().addAll(img, name, price);
+
+        if (disabled) {
+            Label badge = new Label("INDISPONIBLE");
+            badge.setStyle("-fx-text-fill: #d63031; -fx-font-weight: bold;");
+            card.getChildren().add(badge);
         } else {
-            box.getChildren().addAll(name, price, details);
+            card.setOnMouseClicked(e -> {
+                boolean showOptions = shouldShowOptionsForSelectedCategory();
+                Router.setScene(DishDetailView.build(dish, showOptions));
+            });
         }
 
-        return box;
+        return card;
+    }
+
+    // ✅ règle fiable : dépend de la catégorie sélectionnée
+    private static boolean shouldShowOptionsForSelectedCategory() {
+        if (selectedCategory == null || selectedCategory.name == null) return true;
+        String c = selectedCategory.name.toLowerCase();
+        return !(c.contains("dessert") || c.contains("boisson") || c.contains("drink") || c.contains("beverage"));
+    }
+
+    // ✅ Mochi = indisponible
+    private static boolean isMochi(Dish dish) {
+        if (dish == null || dish.name == null) return false;
+        return dish.name.toLowerCase().contains("mochi");
+    }
+
+    private static ImageView loadDishImage(String iconFileName, double w, double h) {
+        ImageView iv = new ImageView();
+        iv.setFitWidth(w);
+        iv.setFitHeight(h);
+        iv.setPreserveRatio(false);
+        iv.setSmooth(true);
+
+        if (iconFileName == null || iconFileName.isBlank()) return iv;
+
+        String path = "/images/" + iconFileName;
+        try (InputStream is = CatalogueView.class.getResourceAsStream(path)) {
+            if (is != null) iv.setImage(new Image(is));
+        } catch (Exception ignored) {}
+
+        return iv;
     }
 }
