@@ -1,7 +1,5 @@
 package fr.java.frontend.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.java.frontend.api.dto.CreateOrderRequest;
 import fr.java.frontend.api.dto.CreateOrderResponse;
 import fr.java.frontend.cart.CartItem;
@@ -15,16 +13,20 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class ApiClient {
 
     private static final String BASE_URL = "http://localhost:7000";
     private static final HttpClient client = HttpClient.newHttpClient();
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    // ✅ GET /categories
     public static List<Category> getCategories() {
         try {
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/api/categories"))
+                    .uri(URI.create(BASE_URL + "/categories"))
                     .GET()
                     .build();
 
@@ -35,10 +37,11 @@ public class ApiClient {
         }
     }
 
+    // ✅ GET /categories/{id}/dishes
     public static List<Dish> getDishes(int categoryId) {
         try {
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/api/dishes?categoryId=" + categoryId))
+                    .uri(URI.create(BASE_URL + "/categories/" + categoryId + "/dishes"))
                     .GET()
                     .build();
 
@@ -49,6 +52,7 @@ public class ApiClient {
         }
     }
 
+    // ✅ POST /orders
     public static int createOrder(String customerRef, List<CartItem> cartItems) {
         try {
             CreateOrderRequest reqBody = new CreateOrderRequest();
@@ -59,10 +63,10 @@ public class ApiClient {
                 CreateOrderRequest.Item item = new CreateOrderRequest.Item();
                 item.dishId = it.dish.id;
                 item.quantity = it.quantity;
-
                 item.options = new ArrayList<>();
-                if (it.spice != null && !it.spice.isBlank()) item.options.add("spice:" + it.spice);
-                if (it.side != null && !it.side.isBlank())   item.options.add("side:" + it.side);
+
+                if (it.spice != null) item.options.add("spice:" + it.spice);
+                if (it.side != null)  item.options.add("side:" + it.side);
 
                 reqBody.items.add(item);
             }
@@ -70,18 +74,19 @@ public class ApiClient {
             String jsonBody = mapper.writeValueAsString(reqBody);
 
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/api/orders"))
+                    .uri(URI.create(BASE_URL + "/orders"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                     .build();
 
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
 
-            if (resp.statusCode() != 201) {
+            if (resp.statusCode() != 200 && resp.statusCode() != 201) {
                 throw new RuntimeException("Erreur backend (" + resp.statusCode() + "): " + resp.body());
             }
 
-            CreateOrderResponse created = mapper.readValue(resp.body(), CreateOrderResponse.class);
+            CreateOrderResponse created =
+                    mapper.readValue(resp.body(), CreateOrderResponse.class);
             return created.id;
 
         } catch (Exception e) {

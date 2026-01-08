@@ -4,14 +4,18 @@ import fr.java.frontend.model.Dish;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Gestionnaire du panier d'achat (Pattern Singleton via static).
+ * Stocke les articles sélectionnés et calcule les totaux.
+ */
 public class Cart {
-
+    // Liste unique des articles dans le panier, partagée par toutes les vues
     private static final List<CartItem> items = new ArrayList<>();
 
     public static List<CartItem> getItems() {
         return items;
     }
-
+    // Calcule le prix total cumulé de tous les articles du panier.
     public static double total() {
         double sum = 0;
         for (CartItem it : items) sum += it.totalPrice();
@@ -27,7 +31,7 @@ public class Cart {
         add(dish, 1, null, null);
     }
 
-    // ✅ ajout avec options
+    // ajout avec options
     public static void add(Dish dish, int quantity, String spice, String side) {
         for (CartItem it : items) {
             if (it.sameProductAndOptions(dish, spice, side)) {
@@ -37,7 +41,7 @@ public class Cart {
         }
         items.add(new CartItem(dish, quantity, spice, side));
     }
-
+    // Augmente la quantité d'un article spécifique.
     public static void increase(int dishId) {
         for (CartItem it : items) {
             if (it.dish != null && it.dish.id == dishId) {
@@ -46,7 +50,7 @@ public class Cart {
             }
         }
     }
-
+    // Diminue la quantité et retire l'article si celle-ci atteint zéro.
     public static void decrease(int dishId) {
         for (int i = 0; i < items.size(); i++) {
             CartItem it = items.get(i);

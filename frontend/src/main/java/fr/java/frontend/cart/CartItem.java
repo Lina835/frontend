@@ -3,6 +3,9 @@ package fr.java.frontend.cart;
 import fr.java.frontend.model.Dish;
 import java.util.Objects;
 
+/**
+ * Représente une ligne du panier (un plat associé à des options et une quantité).
+ */
 public class CartItem {
     public Dish dish;
     public int quantity;
@@ -12,7 +15,7 @@ public class CartItem {
     public String side;    // "Riz", "Nouilles"
 
     public CartItem(Dish dish) {
-        this(dish, 1, null, null); // ✅ plus de valeurs par défaut
+        this(dish, 1, null, null); 
     }
 
     public CartItem(Dish dish, int quantity, String spice, String side) {
@@ -21,17 +24,18 @@ public class CartItem {
         this.spice = normalize(spice);
         this.side  = normalize(side);
     }
-
+    // Calcule le prix total pour cette ligne (Prix unitaire x Quantité).
     public double totalPrice() {
         if (dish == null) return 0.0;
         return dish.price * quantity;
     }
 
-    // ✅ compare produit + options (pour empiler correctement)
+    // compare produit + options (pour empiler correctement)
     public boolean sameProductAndOptions(Dish otherDish, String otherSpice, String otherSide) {
         if (otherDish == null || this.dish == null) return false;
+        // Vérification de l'identité du produit
         if (this.dish.id != otherDish.id) return false;
-
+        // Comparaison sécurisée des options normalisées
         String s1 = normalize(this.spice);
         String s2 = normalize(otherSpice);
 
